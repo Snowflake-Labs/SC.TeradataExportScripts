@@ -31,14 +31,25 @@ def get_proper_extension(kind):
         return ".sql"
     if (kind == "joinindex"):
         return ".sql"
+    if (kind == "insert"):
+        return ".sql"        
     return ".unknown"
 
 
 def process_file(input_directory, input_file):
     pathFile = input_directory + os.path.sep + input_file
-    f = open(pathFile, "r")
-    s = f.read()
-    f.close()
+    try:
+        f = open(pathFile, "r")
+        s = f.read()
+        f.close()
+    except UnicodeDecodeError:
+        try:
+            f = open(pathFile, "r", encoding="ISO-8859-1")
+            s = f.read()
+            f.close()
+        except Exception:
+            print(f"Error opening file {[pathFile]} please review encoding and file permissions")
+            s = ""
     p = s.replace("/* <sc-","/* <cconv> *//* <sc-")
     delimiter = "/* <cconv> */"
     stmnts = p.split(delimiter)
@@ -72,7 +83,8 @@ def process_file(input_directory, input_file):
             i += 1
         
 
-
+print("DDLs files splitter")
+print(f"Processing input dir: {input_directory}")
 # Walking a directory tree and printing the names of the directories and files
 for dirpath, dirnames, files in os.walk(input_directory):
     print(f'Found directory: {dirpath}')
