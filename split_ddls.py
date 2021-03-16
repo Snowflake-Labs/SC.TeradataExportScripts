@@ -2,19 +2,52 @@ import sys
 import re
 import os
 import json
+import argparse
 
-input_directory = sys.argv[1]
-base_output_dir = sys.argv[2]
 
-def get_proper_target_directory(kind, schema):
+arguments_parser = argparse.ArgumentParser(description="DDLs file splitter for SnowConvert")
+arguments_parser.add_argument('--inputdir',required=True, help='This is the directory where your DDL_xxx.sql files are')
+arguments_parser.add_argument('--outdir', required=True, help='This is the directory where the splitted files will be put')
+arguments_parser.add_argument('--duplicates', help='If given duplicate files will be stored on this directory. NOTE: do not put this directory in the the same output directory, this way when running SnowConvert you can just point it to the directory where the splitted files are')
+arguments = arguments_parser.parse_args()
+
+input_directory = arguments.inputdir
+base_output_dir = arguments.outdir
+
+
+extracted_counts = {}
+
+
+def element_already_extracted(full_object_name):
+    if full_object_name in extracted_counts.keys():
+        return True
+    else:
+        return False
+
+def update_extraction_count(full_object_name): 
+    previous_count = 0
+    if full_object_name in extracted_counts.keys():
+        previous_count = extracted_counts[full_object_name]
+    extracted_counts[full_object_name] = previous_count + 1
+
+def get_proper_target_directory(kind, schema, duplicates = False):
     #if (kind == "table"):
     #    return os.path.join(base_output_dir, kind)
-    if (kind=="table" or kind == "view" or kind == "procedure" or kind == "macro" or kind == "function" or kind == "joinindex"):
+    if (kind=="table" or kind == "view" or kind == "procedure" or kind == "macro" or kind == "function" or kind == "joinindex" or kind == "insert"):
         if (schema is not None):
-            return os.path.join(base_output_dir, kind, schema)
+            if duplicates:
+                return os.path.join(arguments.duplicates, kind, schema)
+            else:
+                return os.path.join(base_output_dir, kind, schema)
     if (kind == "schema"):
-        return os.path.join(base_output_dir, kind)
-    return base_output_dir
+        if duplicates:
+            return os.path.join(arguments.duplicates, kind)
+        else:
+            return os.path.join(base_output_dir, kind)
+    if duplicates:
+        return arguments.duplicates
+    else:
+        return base_output_dir
 
 def get_proper_extension(kind):
     if (kind == "view"):
@@ -77,9 +110,24 @@ def process_file(input_directory, input_file):
                 if (not os.path.exists(target_dir)):
                     os.makedirs(target_dir)
                 target_filename = os.path.join(target_dir,object_name + get_proper_extension(kind))
-                f = open(target_filename,"w+")
-                f.write(sp)
-                f.close()
+                is_duplicate = False
+                if element_already_extracted(full_object_name):
+                    is_duplicate = True
+                    print(f"    >>  Duplicate found for {full_object_name}")
+                    target_dir = get_proper_target_directory(kind, schema, True)
+                    target_filename = os.path.join(target_dir,object_name + "_" + str(extracted_counts[full_object_name]) + get_proper_extension(kind))
+                    duplicate_dir = os.path.dirname(target_filename)
+                    # check if duplicates dir was given
+                    if arguments.duplicates:
+                        if (not os.path.exists(duplicate_dir)):
+                            os.makedirs(duplicate_dir)
+                update_extraction_count(full_object_name)
+                if is_duplicate and not arguments.duplicates:
+                    pass
+                else:
+                    f = open(target_filename,"w+")
+                    f.write(sp)
+                    f.close()
             i += 1
         
 
@@ -98,3 +146,6 @@ for dirpath, dirnames, files in os.walk(input_directory):
     jsonFilePath = os.path.join(base_output_dir, "Names.json")
     with open(jsonFilePath, 'w+') as outfile:
             json.dump(elements, outfile)
+
+
+print("Done")

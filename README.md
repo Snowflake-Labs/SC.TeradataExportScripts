@@ -80,3 +80,32 @@ python <<END_SNOWSCRIPT
 print("bteq code")
 END_SNOWSCRIPT
 ```
+# To Split the DDLs files.
+
+Sometimes the DDLs files can be too big or have duplicates.
+This script will split then like this:
+```
++ output_folder
++ -- table
++ -- schema
++ -- procedure
++ -- macro
++ -- joinindex
+```
+
+Inside each folder a subfolder with the database name will be created, and then one file for each element.
+
+```
+$ python3 split_ddls.py -h
+usage: split_ddls.py [-h] --inputdir INPUTDIR --outdir OUTDIR [--duplicates DUPLICATES]
+
+DDLs file splitter for SnowConvert
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --inputdir INPUTDIR   This is the directory where your DDL_xxx.sql files are
+  --outdir OUTDIR       This is the directory where the splitted files will be put
+  --duplicates DUPLICATES
+                        If given duplicate files will be stored on this directory. NOTE: do not put this directory in the the same output directory, this way when running SnowConvert you can just point
+                        it to the directory where the splitted files are
+```
