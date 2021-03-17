@@ -80,6 +80,61 @@ python <<END_SNOWSCRIPT
 print("bteq code")
 END_SNOWSCRIPT
 ```
+## To handle embedded MLOAD Code
+
+It is very common to encounter scenarios where you have embedded MLOAD inside your shell scripts.
+For example something like this:
+
+```bash
+STAGE_DB_NAME=${ENVDB}_STG
+mload <<!
+$LOGON;
+INSERT INTO ${STAGE_DB_NAME}.INVLIST_MLD
+      (INVLIST
+      ,INVMAP) 
+VALUES 
+      (1
+      ,'test');
+
+.END MLOAD;
+.LOGOFF;
+
+QUIT;
+!
+```
+
+In those scenarios you can use these helpers scripts to extract mloads from all files. You can run them like this:
+
+```
+python extract_mload_snippets.py MLOADSourceFolder/
+```
+
+This script will generate several files like:
+* test.mload.invlist.mload.pre.sh
+* test.mload.invlist.mload.snippet.1.mload
+
+You can then feed those mload files to the migration tool.
+
+After migration just run
+
+```
+python restore_mload_snippets.py MLOADTargetFolder/
+```
+
+And it will rebuild your original files replacing your 
+```bash
+mload <<!
+.REMARK mload code
+!
+```
+fragments by 
+
+```bash
+python <<END_SNOWSCRIPT
+print("mload code")
+END_SNOWSCRIPT
+```
+
 # To Split the DDLs files.
 
 Sometimes the DDLs files can be too big or have duplicates.
