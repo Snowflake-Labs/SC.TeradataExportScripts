@@ -106,7 +106,7 @@ QUIT;
 In those scenarios you can use these helpers scripts to extract mloads from all files. You can run them like this:
 
 ```
-python extract_mload_snippets.py MLOADSourceFolder/
+python extract_mload_snippets.py <input-directory-with-original-mload> <output-directory-with-processed-queries>
 ```
 
 This script will generate several files like:
@@ -118,8 +118,10 @@ You can then feed those mload files to the migration tool.
 After migration just run
 
 ```
-python restore_mload_snippets.py MLOADTargetFolder/
+python restore_mload_snippets.py <input-directory>
 ```
+>> NOTE: the tool assumes that the given input directory contains the files that were preprocessed. For example the *.pre.sh and the migrated .mload files as well.
+
 
 And it will rebuild your original files replacing your 
 ```bash
