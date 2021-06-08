@@ -36,7 +36,7 @@ for dirpath, dirnames, files in os.walk(input_directory):
         pos = 0
         while pos < len(lines):
             current_line = lines[pos]
-            matches = re.match(".*bteq\s*<<[-]*\s*(.+?)\s.*",current_line) or re.match(".*bteq\s*<<[-]*\s*(.*)$",current_line) or or re.match(".*\$BTEQ_\w+\s*<<[-]*\s*(.*)$",current_line)
+            matches = re.match(".*bteq\s*<<[-]*\s*(.+?)\s.*",current_line) or re.match(".*bteq\s*<<[-]*\s*(.*)$",current_line) or re.match(".*\$BTEQ_\w+\s*<<[-]*\s*(.*)$",current_line)
             if matches:
                 terminator = matches.group(1)
                 newblock = []
