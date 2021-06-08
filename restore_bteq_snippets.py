@@ -30,7 +30,7 @@ for dirpath, dirnames, files in os.walk(input_directory):
                     matches = re.search("@@SNIPPET(\d+)",l)
                     if not matches is None:
                         snippet_number = matches.groups()[0]
-                        with open(original_file + ".snippet." + snippet_number + "_MultiLoad.py") as snippet_file:
+                        with open(original_file + ".snippet." + snippet_number + "_BTEQ.py") as snippet_file:
                             contents = snippet_file.read()
                             f.write(f'result=$(python <<END_SNOWSCRIPT\n{contents}\nEND_SNOWSCRIPT\n)\n')
                     else:
