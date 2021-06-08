@@ -30,7 +30,7 @@ After execution go to the output folder. All your scripted objects will be in DD
 
 You can look at a sample extraction in the **SampleOutput** folder in this repo.
 
-## To handle embedded BTEQ Code
+## To handle embedded BTEQ Code inside shell scripts like `.ksh` or `.sh` 
 
 It is very common to encounter scenarios where you have embedded BTEQ inside your shell scripts.
 For example something like this:
@@ -52,19 +52,33 @@ echo 'unix command 5'
 In those scenarios you can use these helpers scripts. You can run them like this:
 
 ```
-python extract_bteq_snippets.py shell_script_with_embedded_bteq.sh
+python extract_bteq_snippets.py -h
+usage: extract_bteq_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR
+
+BTEQ embeded shell script extractor for SnowConvert
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --inputdir INPUTDIR  This is the directory where your *.sh or *.ksh files
+                       are
+  --outdir OUTDIR      This is the directory where the splitted files will be
+                       put
+
+
+```
+python extract_bteq_snippets.py --inputdir source_dir_with_shell_scripts --outdir target_dir_with_extracted_bteq 
 ```
 
 This script will generate several files like:
 * shell_script_with_embedded_bteq.sh.pre.sh
 * shell_script_with_embedded_bteq.sh.snippet.1.bteq
 
-You can then feed those bteq files to the migration tool.
+You can then feed those bteq files to the migration tool. Just point it to the `target_dir_with_extracted_bteq`
 
 After migration just run
 
 ```
-python restore_bteq_snippets.py shell_script_with_embedded_bteq.sh.pre.sh
+python restore_bteq_snippets.py outputdir
 ```
 
 And it will rebuild your original file replacing your 
