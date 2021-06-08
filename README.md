@@ -30,6 +30,8 @@ After execution go to the output folder. All your scripted objects will be in DD
 
 You can look at a sample extraction in the **SampleOutput** folder in this repo.
 
+# Handling Shell scripts with BTEQ
+
 ## To handle embedded BTEQ Code inside shell scripts like `.ksh` or `.sh` 
 
 It is very common to encounter scenarios where you have embedded BTEQ inside your shell scripts.
