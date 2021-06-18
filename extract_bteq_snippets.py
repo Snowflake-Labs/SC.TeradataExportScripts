@@ -28,7 +28,7 @@ for dirpath, dirnames, files in os.walk(input_directory):
     for file_name in files:
         print(file_name)
         all_text = open(os.path.join(dirpath, file_name), encoding="ISO-8859-1").read()
-        if not "bteq" in all_text:
+        if not "bteq" in all_text and not "$BTEQ_COMMAND" in all_text:
             continue
         lines = all_text.splitlines()
         snippets = []
