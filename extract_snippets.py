@@ -1,3 +1,25 @@
+##########################################################################################################
+#
+#  This is a helper utility to manage scripts to be processed by the conversion tool named snowconvert
+#  of mobilize.net 
+#
+#  More info: https://www.mobilize.net/products/database-migrations/teradata-to-snowflake
+#
+#  This script needs the required parameters --inputdir INPUTDIR and --outdir OUTDIR
+#    INPUTDIR where are located the sh files with btec or mload scripts 
+#    OUTDIR   where the bteq and mload files extracted will be generated
+#
+#  The files that are not scripts will be copied to the OUTDIR to be easily processed by the 
+#  snowconvert tool
+#
+# Changes Log
+# Version 1.0.0
+# - Unification of scripts for bteq and mload
+# - Preserving the input folder structure to the output
+# - Displaying information of total of copied files and generated files by extension
+#
+##########################################################################################################
+
 import argparse
 import os
 import re
