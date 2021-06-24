@@ -30,7 +30,12 @@ arguments_parser.add_argument('--inputdir',required=True, help='This is the dire
 arguments_parser.add_argument('--outdir', required=True, help='This is the directory where the splitted files will be put')
 arguments = arguments_parser.parse_args()
 
+### This is the list of tags that will be searched in the lines of code  i.e. 
+###   bteq << ! 
+###   mload << !
+### Any supported extension must have an output suffix of the generated file of the snowconvert tool by that input extension
 supported_extensions = { "bteq":"_BTEQ.py", "mload": "_MultiLoad.py" }
+
 pattern_extensions = "|".join(supported_extensions.keys())
 pattern_extensions_upper = pattern_extensions.upper()
 input_directory = arguments.inputdir
