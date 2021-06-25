@@ -45,8 +45,6 @@ pattern_extensions_upper = pattern_extensions.upper()
 input_directory = arguments.inputdir
 output_directory = arguments.outdir
 verbose = arguments.verbose
-print(verbose)
-exit()
 
 snippetbyext = {}
 unmodifiedfiles = 0
