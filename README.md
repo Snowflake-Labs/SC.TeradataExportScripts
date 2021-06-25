@@ -55,7 +55,7 @@ In those scenarios you can use these helpers scripts. You can run them like this
 
 ```bash
 python extract_snippets.py -h
-usage: extract_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR
+usage: extract_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR --verbose
 
 BTEQ/MLOAD embeded shell script extractor for SnowConvert
 
@@ -65,6 +65,10 @@ optional arguments:
                        are
   --outdir OUTDIR      This is the directory where the splitted files will be
                        put
+  --verbose            If this is specified all the files that are being copied 
+                       and processed will be displayed
+  --no-verbose         If this is specified none of the copied and processed will 
+                       be displayed, this is the default behaviour                       
 ```
 
 ```bash
