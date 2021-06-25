@@ -1,6 +1,6 @@
 ##########################################################################################################
 #
-#  This is a helper utility to manage scripts to be processed by the conversion tool named snowconvert
+#  This is a helper utility to manage scripts to be processed by the conversion tool named SnowConvert
 #  of mobilize.net 
 #
 #  More info: https://www.mobilize.net/products/database-migrations/teradata-to-snowflake
@@ -46,6 +46,7 @@ totalfiles = 0
 PRE_SH_TYPE = "pre.sh"
 supported_extension_keys = supported_extensions.keys()
 supported_extension_tags = []
+summary_csv = ["FILE,HAS_EMBEDDED,NUM_SNIPPETS,SNIPPETS_TYPES\n"]
 
 for ext in supported_extension_tags:
     supported_extension_tags.append("$" + ext.upper() + "_COMMAND")
@@ -99,7 +100,7 @@ for dirpath, dirnames, files in os.walk(input_directory):
                     filetype = matches.group(1).lower()
                     newblock = []
                     pos = findnext(lines, pos, terminator, newblock)
-                    snippets.append(newblock)
+                    snippets.append((newblock, filetype))
                     file_without_snippets.append(f"@@SNIPPET{len(snippets)}{supported_extensions[filetype]}\n")
                     continue
                 file_without_snippets.append(current_line + "\n")
@@ -113,39 +114,48 @@ for dirpath, dirnames, files in os.walk(input_directory):
         if len(snippets) == 0:
             unmodifiedfiles = unmodifiedfiles + 1
             totalfiles = totalfiles + 1
+            summary_csv.append(f"{outputfile},false,0,\n")
             try:
                 copyfile(inputfile, outputfile)
-            except IOError as e:
-                print(f"Error: Unable to copy file. {e}")
+            except IOError as exc:
+                print(f"Error: Unable to copy file. {exc}")
             continue
 
         with open(outputfile + ".pre.sh", "w", encoding="ISO-8859-1") as newscript:
             newscript.writelines(file_without_snippets)
         print(f"Wrote to file {subdir}{os.path.sep}{file_name}.pre.sh without snippets")
 
-        currentpresh = 0
         currentsumsnippets = 0
-
         if filetype in snippetbyext:
             currentsumsnippets = snippetbyext[filetype]
         snippetbyext[filetype] = currentsumsnippets + len(snippets)
         totalfiles = totalfiles + len(snippets)
 
+        currentpresh = 0
         if PRE_SH_TYPE in snippetbyext:
             currentpresh = snippetbyext[PRE_SH_TYPE]
         snippetbyext[PRE_SH_TYPE] = currentpresh + 1
         totalfiles = totalfiles + 1
         
+        snippetfiletypes = {}
         pos = 1
-        for s in snippets:
-            outputsuffix = f".snippet.{pos}.{filetype}"
+        for snippet, snippetfiletype in snippets:
+            snippetfiletypes[snippetfiletype] = 1
+            outputsuffix = f".snippet.{pos}.{snippetfiletype}"
             with open(f"{outputfile}{outputsuffix}", "w", encoding="ISO-8859-1") as newsnippet:
-                newsnippet.writelines(s)
+                newsnippet.writelines(snippet)
             pos = pos + 1
             print(f"Wrote to file {subdir}{os.path.sep}{file_name}{outputsuffix}")
-
+        
+        keys = "|".join(snippetfiletypes.keys())
+        summary_csv.append(f"{inputfile},true,{len(snippets)},{keys}\n")
 print()
-print("The total of created files")
-print(snippetbyext)
+if len(snippetbyext) > 0:
+    print("The total of created files")
+    print(snippetbyext)
 print(f"The total of copied unmodified files {unmodifiedfiles}")
 print(f"Total output files {totalfiles}")
+summaryfilepath = os.path.join(output_directory, "summary_output.csv")
+with open(summaryfilepath, "w") as summaryfile:
+    summaryfile.writelines(summary_csv)
+print(f"Wrote summary file to {summaryfilepath}")
