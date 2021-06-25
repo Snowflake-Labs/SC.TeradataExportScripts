@@ -53,11 +53,11 @@ echo 'unix command 5'
 
 In those scenarios you can use these helpers scripts. You can run them like this:
 
-```
-python extract_bteq_snippets.py -h
-usage: extract_bteq_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR
+```shell
+python extract_snippets.py -h
+usage: extract_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR --verbose
 
-BTEQ embeded shell script extractor for SnowConvert
+BTEQ/MLOAD embeded shell script extractor for SnowConvert
 
 optional arguments:
   -h, --help           show this help message and exit
@@ -65,10 +65,19 @@ optional arguments:
                        are
   --outdir OUTDIR      This is the directory where the splitted files will be
                        put
-
+  --verbose            If this is specified all the files that are being copied 
+                       and processed will be displayed
+  --no-verbose         If this is specified none of the copied and processed will 
+                       be displayed, this is the default behaviour                       
 
 ```
-python extract_bteq_snippets.py --inputdir source_dir_with_shell_scripts --outdir target_dir_with_extracted_bteq 
+
+### extract_snippet documentation
+See documentation [here](./extract_snippet.md)
+
+
+```bash
+python extract_snippets.py --inputdir source_dir_with_shell_scripts --outdir target_dir_with_extracted_bteq 
 ```
 
 This script will generate several files like:
@@ -79,11 +88,12 @@ You can then feed those bteq files to the migration tool. Just point it to the `
 
 After migration just run
 
-```
-python restore_bteq_snippets.py outputdir
+```bash
+python restore_snippets.py --inputdir INPUTDIR
 ```
 
 And it will rebuild your original file replacing your 
+
 ```bash
 bteq << EOF
 .REMARK bteq code
@@ -96,6 +106,7 @@ python <<END_SNOWSCRIPT
 print("bteq code")
 END_SNOWSCRIPT
 ```
+
 ## To handle embedded MLOAD Code
 
 It is very common to encounter scenarios where you have embedded MLOAD inside your shell scripts.
@@ -119,10 +130,29 @@ QUIT;
 !
 ```
 
-In those scenarios you can use these helpers scripts to extract mloads from all files. You can run them like this:
+In those scenarios you can use these helpers scripts. You can run them like this:
+
+```shell
+python extract_snippets.py -h
+usage: extract_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR
+
+BTEQ/MLOAD embeded shell script extractor for SnowConvert
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --inputdir INPUTDIR  This is the directory where your *.sh or *.ksh files
+                       are
+  --outdir OUTDIR      This is the directory where the splitted files will be
+                       put
+  --verbose            If this is specified all the files that are being copied 
+                       and processed will be displayed
+  --no-verbose         If this is specified none of the copied and processed will 
+                       be displayed, this is the default behaviour                       
 
 ```
-python extract_mload_snippets.py <input-directory-with-original-mload> <output-directory-with-processed-queries>
+
+```shell
+python extract_snippets.py --inputdir source_dir_with_shell_scripts --outdir target_dir_with_extracted_mload 
 ```
 
 This script will generate several files like:
@@ -133,18 +163,20 @@ You can then feed those mload files to the migration tool.
 
 After migration just run
 
+```bash
+python restore_snippets.py --inputdir INPUTDIR
 ```
-python restore_mload_snippets.py <input-directory>
-```
+
 >> NOTE: the tool assumes that the given input directory contains the files that were preprocessed. For example the *.pre.sh and the migrated .mload files as well.
 
-
 And it will rebuild your original files replacing your 
+
 ```bash
 mload <<!
 .REMARK mload code
 !
 ```
+
 fragments by 
 
 ```bash
@@ -157,6 +189,7 @@ END_SNOWSCRIPT
 
 Sometimes the DDLs files can be too big or have duplicates.
 This script will split then like this:
+
 ```
 + output_folder
 + -- table
