@@ -5,12 +5,13 @@
 #
 #  More info: https://www.mobilize.net/products/database-migrations/teradata-to-snowflake
 #
-#  This script needs the required parameters --inputdir INPUTDIR and --outdir OUTDIR
+#  This script needs the required parameters --inputdir INPUTDIR and --outdir OUTDIR --verbose
 #    INPUTDIR where are located the sh files with btec or mload scripts 
 #    OUTDIR   where the bteq and mload files extracted will be generated
 #
 #  The files that are not scripts will be copied to the OUTDIR to be easily processed by the 
 #  snowconvert tool
+#  The verbose flag has a default False value if it is not passed.
 #
 # Changes Log
 # Version 1.0.0
@@ -28,6 +29,7 @@ from shutil import copyfile
 arguments_parser = argparse.ArgumentParser(description="MLOAD/BTEQ embedded shell script extractor for SnowConvert")
 arguments_parser.add_argument('--inputdir',required=True, help='This is the directory where your *.sh or *.ksh files are')
 arguments_parser.add_argument('--outdir', required=True, help='This is the directory where the splitted files will be put')
+arguments_parser.add_argument('--verbose', required=False, default=False, action=argparse.BooleanOptionalAction, help='If this is specified all the files that are being copied and processed will be displayed')
 arguments = arguments_parser.parse_args()
 
 ### This is the list of tags that will be searched in the lines of code  i.e. 
@@ -40,29 +42,94 @@ pattern_extensions = "|".join(supported_extensions.keys())
 pattern_extensions_upper = pattern_extensions.upper()
 input_directory = arguments.inputdir
 output_directory = arguments.outdir
+verbose = arguments.verbose
+
 snippetbyext = {}
 unmodifiedfiles = 0
-totalfiles = 0
+total_inputfiles = 0
+total_outputfiles = 0
 PRE_SH_TYPE = "pre.sh"
 supported_extension_keys = supported_extensions.keys()
 supported_extension_tags = []
-summary_csv = ["FILE,HAS_EMBEDDED,NUM_SNIPPETS,SNIPPETS_TYPES\n"]
-
+summary_input_csv = ["ENCODING,FILE,HAS_EMBEDDED,NUM_SNIPPETS,SNIPPETS_TYPES\n"]
+summary_output_csv = ["ENCODING,FILE,REMOVED_EMBEDDED,IS_GENERATED_SNIPPET\n"]
+encodings_used = {}
 for ext in supported_extension_tags:
     supported_extension_tags.append("$" + ext.upper() + "_COMMAND")
 
-def find_extensions_in_text(line, extensions, extension_tags):
+encodings = ["utf-8", "ISO-8859-1"]
+
+def read_using_encodings(filepath, encodings):
+    """Reads the content of a file trying to open with the encodings configured with the parameter list encodings
+    The first valid read() will be returned as the content.
+    Returns a tuple with the content and the encoding valid used.
+
+    filepath
+        The filepath of the file to be read
+    encodings
+        The list of the encodings to be used to try to read
+    
+    If none of the encodings will be possible to read, it will return the tuple (None, "UnknownEncoding")
+
+    Review the summary files to check if there are a lot of UnknownEncoding and consider the refinement of the passed encodings
+    """
+    error = False
+    for encoding in encodings:
+        content = None
+        try:       
+            with open(filepath, encoding=encoding) as file:
+                content = file.read()
+        except:
+            error = True
+        if content is not None:
+            return (content, encoding)
+    return (None, "UnknownEncoding")
+
+def find_extensions_in_text(text, extensions, extension_tags):
+    """Find the extension and extension tags passed in the text
+    This is just a fast prediction that could be used to see if there are
+    valid tags like bteq << or mload << in the text.
+    A further regular expression will be applied later.
+    """
+    if text is None:
+        return False
+
     for ext in extensions:
-        if ext in line:
+        if ext in text:
             return True
 
     for tag in extension_tags:
-        if tag in line:
+        if tag in text:
             return True
 
     return False
 
+def increment_table(table, key):
+    """Increments the value in the table for 1 in its value, or 1 if it did not exist
+    if table key is not present
+    table[key] = 1
+    if table key is present
+    table[key] = table[key] + 1
+    """
+    currentvalue = 0
+    if key in table:
+        currentvalue = table[key]
+    table[key] = currentvalue + 1
+
 def findnext(lines, pos, terminator, block):
+    """Finds the next terminator in the lines from the following position and returns the block between the position and the terminator
+    Returns the new position after the terminator where found.
+    It will comment unsupported statements like $ANYVAR; The replaced text will now have ;/*Not supported command from variable $ANYVAR;*/
+
+    lines
+        The text lines
+    pos
+        The current position
+    terminator
+        The terminator to be searched
+    block
+        The new block between the position and the terminator    
+    """
     pos = pos + 1
     while (pos < len(lines)):
         line = lines[pos]
@@ -82,7 +149,7 @@ for dirpath, dirnames, files in os.walk(input_directory):
         inputfile = os.path.join(dirpath, file_name)
         inputsubdir = os.path.dirname(inputfile)
         subdir = inputsubdir[rootlen:]
-        all_text = open(inputfile, encoding="ISO-8859-1").read()
+        (all_text, encoding_used) = read_using_encodings(inputfile, encodings)
 
         snippets = []
 
@@ -111,51 +178,65 @@ for dirpath, dirnames, files in os.walk(input_directory):
         if not os.path.exists(outputsubdir):
             os.makedirs(outputsubdir)
 
+        total_inputfiles = total_inputfiles + 1
+        total_outputfiles = total_outputfiles + 1
+        increment_table(encodings_used, encoding_used)
+
         if len(snippets) == 0:
+            # Copy files that are not modified
+            subpath = os.path.join(subdir, file_name)
+            if verbose:
+                print(f"Copied unmodified file {subpath}")
+
             unmodifiedfiles = unmodifiedfiles + 1
-            totalfiles = totalfiles + 1
-            summary_csv.append(f"{outputfile},false,0,\n")
+            summary_input_csv.append(f"{encoding_used},{outputfile},false,0,\n")
+            summary_output_csv.append(f"{encoding_used},{subpath},false,false\n")
             try:
                 copyfile(inputfile, outputfile)
             except IOError as exc:
                 print(f"Error: Unable to copy file. {exc}")
             continue
 
-        with open(outputfile + ".pre.sh", "w", encoding="ISO-8859-1") as newscript:
+        subpath = os.path.join(subdir, file_name) + ".pre.sh"
+        summary_output_csv.append(f"{encoding_used},{subpath},true,false\n")
+        with open(outputfile + ".pre.sh", "w", encoding=encoding_used) as newscript:
             newscript.writelines(file_without_snippets)
-        print(f"Wrote to file {subdir}{os.path.sep}{file_name}.pre.sh without snippets")
+        if verbose:
+            print(f"Wrote to file {subpath} without snippets")
 
-        currentsumsnippets = 0
-        if filetype in snippetbyext:
-            currentsumsnippets = snippetbyext[filetype]
-        snippetbyext[filetype] = currentsumsnippets + len(snippets)
-        totalfiles = totalfiles + len(snippets)
-
-        currentpresh = 0
-        if PRE_SH_TYPE in snippetbyext:
-            currentpresh = snippetbyext[PRE_SH_TYPE]
-        snippetbyext[PRE_SH_TYPE] = currentpresh + 1
-        totalfiles = totalfiles + 1
-        
+        increment_table(snippetbyext, PRE_SH_TYPE)
+        total_outputfiles = total_outputfiles + len(snippets)        
         snippetfiletypes = {}
         pos = 1
         for snippet, snippetfiletype in snippets:
+            increment_table(snippetbyext, snippetfiletype)
             snippetfiletypes[snippetfiletype] = 1
             outputsuffix = f".snippet.{pos}.{snippetfiletype}"
-            with open(f"{outputfile}{outputsuffix}", "w", encoding="ISO-8859-1") as newsnippet:
+            subpath = os.path.join(subdir, file_name) + outputsuffix
+            summary_output_csv.append(f"{encoding_used},{subpath},false,true\n")
+            with open(f"{outputfile}{outputsuffix}", "w", encoding=encoding_used) as newsnippet:
                 newsnippet.writelines(snippet)
             pos = pos + 1
-            print(f"Wrote to file {subdir}{os.path.sep}{file_name}{outputsuffix}")
+            if verbose:
+                print(f"Wrote to file {subpath}")
         
         keys = "|".join(snippetfiletypes.keys())
-        summary_csv.append(f"{inputfile},true,{len(snippets)},{keys}\n")
+        summary_input_csv.append(f"{encoding_used},{inputfile},true,{len(snippets)},{keys}\n")
+
 print()
 if len(snippetbyext) > 0:
-    print("The total of created files")
+    print("The total of created files by extension:")
     print(snippetbyext)
 print(f"The total of copied unmodified files {unmodifiedfiles}")
-print(f"Total output files {totalfiles}")
-summaryfilepath = os.path.join(output_directory, "summary_output.csv")
-with open(summaryfilepath, "w") as summaryfile:
-    summaryfile.writelines(summary_csv)
-print(f"Wrote summary file to {summaryfilepath}")
+print(f"Total input files {total_inputfiles}")
+print(f"Total output files {total_outputfiles}")
+summaryinputfilepath = os.path.join(output_directory, "summary_input.csv")
+with open(summaryinputfilepath, "w") as summaryfile:
+    summaryfile.writelines(summary_input_csv)
+summaryoutputfilepath = os.path.join(output_directory, "summary_output.csv")
+with open(summaryoutputfilepath, "w") as summaryfile:
+    summaryfile.writelines(summary_output_csv)
+print("The input encodings found were:")
+print(encodings_used)
+print(f"Wrote input summary file to {summaryinputfilepath}")
+print(f"Wrote output summary file to {summaryoutputfilepath}")
