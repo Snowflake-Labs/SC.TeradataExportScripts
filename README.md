@@ -53,7 +53,7 @@ echo 'unix command 5'
 
 In those scenarios you can use these helpers scripts. You can run them like this:
 
-```bash
+```shell
 python extract_snippets.py -h
 usage: extract_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR --verbose
 
@@ -72,6 +72,10 @@ optional arguments:
 
 ```
 
+### extract_snippet documentation
+See documentation [here](./extract_snippet.md)
+
+
 ```bash
 python extract_snippets.py --inputdir source_dir_with_shell_scripts --outdir target_dir_with_extracted_bteq 
 ```
@@ -85,7 +89,7 @@ You can then feed those bteq files to the migration tool. Just point it to the `
 After migration just run
 
 ```bash
-python restore_snippets.py outputdir
+python restore_snippets.py --inputdir INPUTDIR
 ```
 
 And it will rebuild your original file replacing your 
@@ -102,6 +106,7 @@ python <<END_SNOWSCRIPT
 print("bteq code")
 END_SNOWSCRIPT
 ```
+
 ## To handle embedded MLOAD Code
 
 It is very common to encounter scenarios where you have embedded MLOAD inside your shell scripts.
@@ -127,7 +132,7 @@ QUIT;
 
 In those scenarios you can use these helpers scripts. You can run them like this:
 
-```bash
+```shell
 python extract_snippets.py -h
 usage: extract_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR
 
@@ -146,7 +151,7 @@ optional arguments:
 
 ```
 
-```bash
+```shell
 python extract_snippets.py --inputdir source_dir_with_shell_scripts --outdir target_dir_with_extracted_mload 
 ```
 
@@ -161,15 +166,17 @@ After migration just run
 ```bash
 python restore_snippets.py --inputdir INPUTDIR
 ```
+
 >> NOTE: the tool assumes that the given input directory contains the files that were preprocessed. For example the *.pre.sh and the migrated .mload files as well.
 
-
 And it will rebuild your original files replacing your 
+
 ```bash
 mload <<!
 .REMARK mload code
 !
 ```
+
 fragments by 
 
 ```bash
@@ -182,6 +189,7 @@ END_SNOWSCRIPT
 
 Sometimes the DDLs files can be too big or have duplicates.
 This script will split then like this:
+
 ```
 + output_folder
 + -- table
