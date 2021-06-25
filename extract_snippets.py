@@ -29,7 +29,9 @@ from shutil import copyfile
 arguments_parser = argparse.ArgumentParser(description="MLOAD/BTEQ embedded shell script extractor for SnowConvert")
 arguments_parser.add_argument('--inputdir',required=True, help='This is the directory where your *.sh or *.ksh files are')
 arguments_parser.add_argument('--outdir', required=True, help='This is the directory where the splitted files will be put')
-arguments_parser.add_argument('--verbose', required=False, default=False, action=argparse.BooleanOptionalAction, help='If this is specified all the files that are being copied and processed will be displayed')
+arguments_parser.add_argument('--verbose', required=False, dest='verbose', action='store_true', help='If this is specified all the files that are being copied and processed will be displayed')
+arguments_parser.add_argument('--no-verbose', required=False, dest='verbose', action='store_false', help='If this is specified none of the copied and processed will be displayed, this is the default behaviour')
+arguments_parser.set_defaults(verbose=False)
 arguments = arguments_parser.parse_args()
 
 ### This is the list of tags that will be searched in the lines of code  i.e. 
@@ -43,6 +45,8 @@ pattern_extensions_upper = pattern_extensions.upper()
 input_directory = arguments.inputdir
 output_directory = arguments.outdir
 verbose = arguments.verbose
+print(verbose)
+exit()
 
 snippetbyext = {}
 unmodifiedfiles = 0
