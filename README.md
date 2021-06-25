@@ -69,6 +69,7 @@ optional arguments:
                        and processed will be displayed
   --no-verbose         If this is specified none of the copied and processed will 
                        be displayed, this is the default behaviour                       
+
 ```
 
 ```bash
@@ -138,6 +139,10 @@ optional arguments:
                        are
   --outdir OUTDIR      This is the directory where the splitted files will be
                        put
+  --verbose            If this is specified all the files that are being copied 
+                       and processed will be displayed
+  --no-verbose         If this is specified none of the copied and processed will 
+                       be displayed, this is the default behaviour                       
 
 ```
 
