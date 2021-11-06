@@ -1,9 +1,9 @@
 ##########################################################################################################
 #
 #  This is a helper utility to manage scripts to be processed by the conversion tool named SnowConvert
-#  of mobilize.net 
+#  of Mobilize.Net
 #
-#  More info: https://www.mobilize.net/products/database-migrations/teradata-to-snowflake
+#  More info: https://www.mobilize.net/products/database-migrations/snowconvert
 #
 #  This script needs the required parameters --inputdir INPUTDIR and --outdir OUTDIR --verbose
 #    INPUTDIR where are located the sh files with btec or mload scripts 
@@ -18,6 +18,9 @@
 # - Unification of scripts for bteq and mload
 # - Preserving the input folder structure to the output
 # - Displaying information of total of copied files and generated files by extension
+#
+# 2021-11-05
+# - Adding support for fastload snippet generation
 #   
 ##########################################################################################################
 

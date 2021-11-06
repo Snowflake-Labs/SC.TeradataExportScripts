@@ -57,7 +57,7 @@ In those scenarios you can use these helpers scripts. You can run them like this
 python extract_snippets.py -h
 usage: extract_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR --verbose
 
-BTEQ/MLOAD/FLOAD embeded shell script extractor for SnowConvert
+BTEQ/MLOAD/FLOAD embedded shell script extractor for SnowConvert
 
 optional arguments:
   -h, --help           show this help message and exit
@@ -136,7 +136,7 @@ In those scenarios you can use these helpers scripts. You can run them like this
 python extract_snippets.py -h
 usage: extract_snippets.py [-h] --inputdir INPUTDIR --outdir OUTDIR
 
-BTEQ/MLOAD/FLOAD embeded shell script extractor for SnowConvert
+BTEQ/MLOAD/FLOAD embedded shell script extractor for SnowConvert
 
 optional arguments:
   -h, --help           show this help message and exit

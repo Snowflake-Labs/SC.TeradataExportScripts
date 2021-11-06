@@ -1,12 +1,12 @@
 ##########################################################################################################
 #
 #  This is a helper utility to process some input files for the conversion tool named SnowConvert
-#  of mobilize.net
+#  of Mobilize.Net
 #
-#  More info: https://www.mobilize.net/products/database-migrations/teradata-to-snowflake
+#  More info: https://www.mobilize.net/products/database-migrations/snowconvert
 #
 #  This script needs the required parameters --inoutdir INOUTDIR
-#    INOUTDIR where are located the supported files with sql, btec, fload or mload scripts 
+#    INOUTDIR where are located the supported files with sql, bteq, fload or mload scripts 
 #
 #  The files of the supported extensions will be modified the content for the 4 following problemtic patterns:
 #  *1)  The character # at the beginning of the line will be commented
@@ -14,11 +14,13 @@
 #         # Original Comment
 #       Output:
 #         --# Original Comment
+#
 #  *2)  Multiple block markers of comments will be corrected 
 #       Input:
 #         /*COMMENT /*INNER COMMENT */ OUT COMMENT */ 
 #       Output:
-#         /*COMMENT /--*INNER COMMENT *--/ OUT COMMENT */
+#         /*COMMENT /-*INNER COMMENT *-/ OUT COMMENT */
+#
 #  *3)  Definition of a variable with a content in multiple line (or singular line) 
 #       Input:
 #         VAR_NAME = "content of the whole file"
@@ -45,7 +47,9 @@
 #         --"
 #
 # Changes Log
-# Version 1.0.0
+# 
+# 2021-11-05
+# - Creation of the script to support the 4 different scenarios
 # - Displaying information of total of modified files by extension
 #
 ##########################################################################################################
@@ -60,7 +64,19 @@ arguments_parser.add_argument('--verbose', required=False, dest='verbose', actio
 arguments_parser.add_argument('--no-verbose', required=False, dest='verbose', action='store_false', help='If this is specified none of the copied and processed will be displayed, this is the default behaviour')
 arguments_parser.set_defaults(verbose=False)
 arguments = arguments_parser.parse_args()
+verbose = arguments.verbose
 
+def increment_table(table, key):
+    """Increments the value in the table for 1 in its value, or 1 if it did not exist
+    if table key is not present
+    table[key] = 1
+    if table key is present
+    table[key] = table[key] + 1
+    """
+    currentvalue = 0
+    if key in table:
+        currentvalue = table[key]
+    table[key] = currentvalue + 1
 
 def correct_multiblock_line(line, index, close_index, inside_block_comments):
     newline = ""
@@ -156,22 +172,23 @@ def repair_assign_vars(file):
         elif not inside_block_comments and re.search("^#", line):
             newline=f"--{line}"
             fixed_comments = True
-        elif position == size and (matches := re.search("^([^\"]+)(\")$", line)):
+        elif position == size and (matches := re.search("^([^\"]{3}[^\"]*)(\")$", line)):
             fixed_lastline = True
             newlines.append(f"{matches.group(1)}\n")
             newline=f"--{matches.group(2)}\n"
 
         newlines.append(newline)
 
-    if repaired:
-        not_tag = "" if not search_close else "NOT"
-        print(f"The file {file} HAD the variable mark. The varname was $varname. The closing quote was {not_tag} found")
-    if double_comment_fixed:
-        print(f"The file {file} HAD double comment mark, and it is now fixed")
-    if fixed_comments:
-        print(f"The file {file} HAD # comment mark, and it is now fixed as --#")
-    if fixed_lastline:
-        print(f"The file {file} needed to correct the last line with an ending double quote")
+    if verbose:
+        if repaired:
+            not_tag = "" if not search_close else "NOT "
+            print(f"The file {file} HAD the variable mark. The varname was $varname. The closing quote was {not_tag}found")
+        if double_comment_fixed:
+            print(f"The file {file} HAD double comment mark, and it is now fixed")
+        if fixed_comments:
+            print(f"The file {file} HAD # comment mark, and it is now fixed as --#")
+        if fixed_lastline:
+            print(f"The file {file} needed to correct the last line with an ending double quote")
 
     if repaired or double_comment_fixed or fixed_comments or fixed_lastline:
         with open(f"{file}", "w") as f:
@@ -182,17 +199,24 @@ def repair_assign_vars(file):
 
 input_directory=arguments.inoutdir
 supported_extentions={ ".bteq", ".mload", ".fload", ".sql" }
-i = 0
+supported = 0
 changed = 0
 total = 0
+modifiedbyext = {}
 for dirpath, dirnames, files in os.walk(input_directory):
     total += len(files)
     for file_name in files:
         inoutfile = os.path.join(dirpath, file_name)
         ext = os.path.splitext(file_name)[1]
         if ext in supported_extentions:
-            i += 1
-            print(f"Reading file {i} {inoutfile}")
-            changed += repair_assign_vars(inoutfile)
+            supported += 1
+            current_changed = repair_assign_vars(inoutfile)
+            if current_changed > 0:
+                changed += current_changed
+                increment_table(modifiedbyext, ext)
 
-print(f"Changed {changed} from total {total} files")
+if len(modifiedbyext) > 0:
+    print("The total of modified files by extension")
+    print(modifiedbyext)
+
+print(f"Changed {changed} files from total of {supported} supported files and a total {total} files from inout directory specified")
