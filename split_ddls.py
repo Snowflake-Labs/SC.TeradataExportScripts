@@ -33,7 +33,7 @@ def update_extraction_count(full_object_name):
 def get_proper_target_directory(kind, schema, duplicates = False):
     #if (kind == "table"):
     #    return os.path.join(base_output_dir, kind)
-    if (kind=="table" or kind == "view" or kind == "procedure" or kind == "macro" or kind == "function" or kind == "joinindex" or kind == "insert"):
+    if (kind=="table" or kind == "view" or kind == "procedure" or kind == "macro" or kind == "function" or kind == "index" or kind == "materialized_view" or kind == "sequence" or kind == "dblink" or kind == "synonym" or kind == "trigger" or kind == "type" or kind == "package"):
         if (schema is not None):
             if duplicates:
                 return os.path.join(arguments.duplicates, kind, schema)
@@ -62,11 +62,23 @@ def get_proper_extension(kind):
         return ".sql"
     if (kind == "schema"):
         return ".sql"
-    if (kind == "joinindex"):
+    if (kind == "index"):
         return ".sql"
-    if (kind == "insert"):
-        return ".sql"        
-    return ".unknown"
+    if (kind == "materialized_view"):
+        return ".sql"
+    if (kind == "sequence"):
+        return ".sql"
+    if (kind == "dblink"):
+        return ".sql"
+    if (kind == "synonym"):
+        return ".sql"
+    if (kind == "trigger"):
+        return ".sql"
+    if (kind == "type"):
+        return ".sql"
+    if (kind == "package"):
+        return ".sql"      
+    return "."+kind
 
 
 def process_file(input_directory, input_file):
