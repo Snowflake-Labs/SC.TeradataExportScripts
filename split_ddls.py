@@ -11,6 +11,8 @@ arguments_parser.add_argument('--outdir', required=True, help='This is the direc
 arguments_parser.add_argument('--duplicates', help='If given duplicate files will be stored on this directory. NOTE: do not put this directory in the the same output directory, this way when running SnowConvert you can just point it to the directory where the splitted files are')
 arguments = arguments_parser.parse_args()
 
+supported_types = ("table","view","procedure","macro","function","index","joinindex","materialized_view","sequence","dblink","synonym","trigger","type","package")
+
 input_directory = arguments.inputdir
 base_output_dir = arguments.outdir
 
@@ -33,7 +35,7 @@ def update_extraction_count(full_object_name):
 def get_proper_target_directory(kind, schema, duplicates = False):
     #if (kind == "table"):
     #    return os.path.join(base_output_dir, kind)
-    if (kind=="table" or kind == "view" or kind == "procedure" or kind == "macro" or kind == "function" or kind == "joinindex" or kind == "insert"):
+    if (kind in supported_types):
         if (schema is not None):
             if duplicates:
                 return os.path.join(arguments.duplicates, kind, schema)
@@ -50,23 +52,9 @@ def get_proper_target_directory(kind, schema, duplicates = False):
         return base_output_dir
 
 def get_proper_extension(kind):
-    if (kind == "view"):
-        return ".sql"
-    if (kind == "table"):
-        return ".sql"
-    if (kind == "macro"):
-        return ".sql"
-    if (kind == "procedure"):
-        return ".sql"
-    if (kind == "function"):
-        return ".sql"
-    if (kind == "schema"):
-        return ".sql"
-    if (kind == "joinindex"):
-        return ".sql"
-    if (kind == "insert"):
-        return ".sql"        
-    return ".unknown"
+    if (kind in supported_types):
+        return ".sql"      
+    return "."+kind
 
 
 def process_file(input_directory, input_file):
