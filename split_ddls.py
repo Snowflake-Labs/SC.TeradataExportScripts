@@ -11,7 +11,7 @@ arguments_parser.add_argument('--outdir', required=True, help='This is the direc
 arguments_parser.add_argument('--duplicates', help='If given duplicate files will be stored on this directory. NOTE: do not put this directory in the the same output directory, this way when running SnowConvert you can just point it to the directory where the splitted files are')
 arguments = arguments_parser.parse_args()
 
-supported_types = ("table","view","procedure","macro","function","index","materialized_view","sequence","dblink","synonym","trigger","type","package")
+supported_types = ("table","view","procedure","macro","function","index","joinindex","materialized_view","sequence","dblink","synonym","trigger","type","package")
 
 input_directory = arguments.inputdir
 base_output_dir = arguments.outdir
