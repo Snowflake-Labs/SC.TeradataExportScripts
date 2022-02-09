@@ -24,7 +24,7 @@ Put TPT files in a source folder. You can find the examples [here](samples)
 
  ![alt-text-here](assents/TPTAcceleratorScripts001.jpg)
 
-Run the [tpt_accelerator_step1.py](scripts/tpt_accelerator_step1.py) python script as follows:
+Run the [tpt_accelerator_step1.py](./scripts/tpt_to_sql_step1.py) python script as follows:
  
 Parameters:
 
@@ -56,7 +56,7 @@ Copy the converted code in the outdir (workdir) folder as follows:
 
 ### Step 3: Embed the converted code
 
-Run the [tpt_accelerator_step2.py](scripts/tpt_to_sql_step2.py) python script as follows:
+Run the [tpt_accelerator_step2.py](./scripts/tpt_to_sql_step2.py) python script as follows:
 
 Parameters:
  
