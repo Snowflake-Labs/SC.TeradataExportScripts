@@ -1,0 +1,158 @@
+DEFINE JOB EXAMPLE2
+
+DESCRIPTION 'EXAMPLE2 Table V1.0'
+ (
+  DEFINE SCHEMA Flat_File_Schema
+  (
+   Column1                         VARCHAR(9)
+  ,Column2                     VARCHAR(15)
+    );
+
+  DEFINE OPERATOR o_mload
+   TYPE update
+   SCHEMA *
+   ATTRIBUTES
+    (
+      VARCHAR TdpId           = @TdpId
+     ,VARCHAR UserName        = @UserName
+     ,VARCHAR UserPassword    = @UserPassword
+     ,VARCHAR AccountId       = @AccountId
+     ,INTEGER MaxSessions     = @MaxSessions
+     ,INTEGER MinSessions     = @MinSessions
+     ,VARCHAR TargetTable     = @TargetTable
+     ,VARCHAR WorkingDatabase = @WorkingDatabase
+     ,VARCHAR LogTable        = @LogTable
+     ,VARCHAR ErrorTable1     = @ErrorTable1
+     ,VARCHAR ErrorTable2     = @ErrorTable2
+     ,VARCHAR WorkTable       = @WorkTable
+     ,VARCHAR PrivateLogName  = 'Load'
+     ,VARCHAR AmpCheck        = 'None'
+     ,INTEGER TenacityHours   = 1
+     ,INTEGER TenacitySleep   = 6
+     ,INTEGER ErrorLimit      = 10
+    );
+
+  DEFINE OPERATOR o_tpump
+   TYPE stream
+   SCHEMA *
+   ATTRIBUTES
+    (
+      VARCHAR TdpId           = @TdpId
+     ,VARCHAR UserName        = @UserName
+     ,VARCHAR UserPassword    = @UserPassword
+     ,VARCHAR AccountId       = @AccountId
+     ,INTEGER MaxSessions     = @MaxSessions
+     ,INTEGER MinSessions     = @MinSessions
+     ,VARCHAR TargetTable     = @TargetTable
+     ,VARCHAR WorkingDatabase = @WorkingDatabase
+     ,VARCHAR MacroDatabase   = @MacroDatabase
+     ,VARCHAR LogTable        = @LogTable
+     ,VARCHAR ErrorTable1     = @ErrorTable1
+     ,VARCHAR ErrorTable2     = @ErrorTable2
+     ,VARCHAR WorkTable       = @WorkTable
+     ,VARCHAR PrivateLogName  = 'Load'
+     ,INTEGER TenacityHours   = 1
+     ,INTEGER TenacitySleep   = 6
+     ,INTEGER ErrorLimit      = 10
+    );
+
+  DEFINE OPERATOR o_bteq
+   TYPE inserter
+   SCHEMA *
+   ATTRIBUTES
+    (
+      VARCHAR TdpId           = @TdpId
+     ,VARCHAR UserName        = @UserName
+     ,VARCHAR UserPassword    = @UserPassword
+     ,VARCHAR AccountId       = @AccountId
+     ,INTEGER MaxSessions     = @MaxSessions
+     ,INTEGER MinSessions     = @MinSessions
+     ,VARCHAR TargetTable     = @TargetTable
+     ,VARCHAR WorkingDatabase = @WorkingDatabase
+     ,VARCHAR LogTable        = @LogTable
+     ,VARCHAR ErrorTable1     = @ErrorTable1
+     ,VARCHAR ErrorTable2     = @ErrorTable2
+     ,VARCHAR WorkTable       = @WorkTable
+     ,VARCHAR PrivateLogName  = 'Load'
+    );
+
+  DEFINE OPERATOR o_fastload
+   TYPE load
+   SCHEMA *
+   ATTRIBUTES
+    (
+      VARCHAR TdpId           = @TdpId
+     ,VARCHAR UserName        = @UserName
+     ,VARCHAR UserPassword    = @UserPassword
+     ,VARCHAR AccountId       = @AccountId
+     ,INTEGER MaxSessions     = @MaxSessions
+     ,INTEGER MinSessions     = @MinSessions
+     ,VARCHAR TargetTable     = @TargetTable
+     ,VARCHAR WorkingDatabase = @WorkingDatabase
+     ,VARCHAR LogTable        = @LogTable
+     ,VARCHAR ErrorTable1     = @ErrorTable1
+     ,VARCHAR ErrorTable2     = @ErrorTable2
+     ,VARCHAR WorkTable       = @WorkTable
+     ,VARCHAR PrivateLogName  = 'Load'
+    );
+
+   DEFINE OPERATOR Read_Operator
+   TYPE DATACONNECTOR PRODUCER
+   SCHEMA Flat_File_Schema
+   ATTRIBUTES
+    (
+     VARCHAR FILELIST = 'YES' ,
+     VARCHAR FileName         = @ListFile,
+     VARCHAR Format         = 'delimited',
+     VARCHAR TextDelimiter  = '|',
+     VARCHAR OpenMode       = 'Read',
+     VARCHAR PrivateLogName = 'Read'
+    );
+
+   DEFINE OPERATOR o_ddl
+   DESCRIPTION 'TERADATA PARALLEL TRANSPORTER DDL OPERATOR'
+   TYPE DDL
+   ATTRIBUTES
+   (
+     VARCHAR PrivateLogName  = 'Load',
+     VARCHAR TdpId           = @TdpId,
+     VARCHAR UserName        = @UserName,
+     VARCHAR UserPassword    = @UserPassword,
+     VARCHAR AccountID       = @AccountId,
+     VARCHAR TargetTable     = @TargetTable,
+     VARCHAR WorkingDatabase = @WorkingDatabase,
+     VARCHAR LogTable        = @LogTable,
+     VARCHAR ErrorTable1     = @ErrorTable1,
+     VARCHAR ErrorTable2     = @ErrorTable2,
+     VARCHAR WorkTable       = @WorkTable
+   );
+
+APPLY
+(
+   'UPDATE EXAMPLE2
+    SET
+            BUSINESS_ENTITY_ID              =   COALESCE(:Column1 ,0)
+          WHERE
+            COLUMN2_ID    =  COALESCE(cast(:Column2 as decimal(15,0)),0.0)
+                                   ;',
+
+    'INSERT INTO EXAMPLE2
+     (
+          COLUM_ID
+    ,BUSINESS_ENTITY_ID
+        )
+       VALUES
+          (
+     CAST(:Column2 AS DECIMAL(15,0))
+    ,COALESCE(:Column1 ,0)
+        );
+       '
+)   INSERT FOR MISSING UPDATE ROWS
+        IGNORE DUPLICATE ROWS
+        IGNORE MISSING UPDATE ROWS
+        TO OPERATOR ( @load_op[@LoadInst] )
+        SELECT * FROM OPERATOR ( Read_Operator[@ReadInst] );
+);
+
+
+
