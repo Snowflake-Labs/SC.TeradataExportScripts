@@ -1,0 +1,148 @@
+DEFINE JOB EXAMPLE1
+DESCRIPTION 'EXAMPLE1 Table V1.0'
+(
+
+DEFINE SCHEMA Flat_File_Schema
+(
+ Column1                                   CHAR(3)
+,Posting_Date                                      CHAR(8)
+);
+
+DEFINE OPERATOR o_mload
+   TYPE update
+   SCHEMA *
+   ATTRIBUTES
+    (
+        VARCHAR TdpId           = @TdpId
+        ,VARCHAR UserName        = @UserName
+        ,VARCHAR UserPassword    = @UserPassword
+        ,VARCHAR AccountId       = @AccountId
+        ,INTEGER MaxSessions     = @MaxSessions
+        ,INTEGER MinSessions     = @MinSessions
+        ,VARCHAR TargetTable     = @TargetTable
+        ,VARCHAR WorkingDatabase = @WorkingDatabase
+        ,VARCHAR LogTable        = @LogTable
+        ,VARCHAR ErrorTable1     = @ErrorTable1
+        ,VARCHAR ErrorTable2     = @ErrorTable2
+        ,VARCHAR WorkTable       = @WorkTable
+        ,VARCHAR PrivateLogName  = 'Load'
+        ,VARCHAR AmpCheck        = 'None'
+        ,INTEGER TenacityHours   = 1
+        ,INTEGER TenacitySleep   = 6
+        ,INTEGER ErrorLimit      = 10
+    );
+
+DEFINE OPERATOR o_tpump
+   TYPE stream
+   SCHEMA *
+   ATTRIBUTES
+    (
+        VARCHAR TdpId           = @TdpId
+        ,VARCHAR UserName        = @UserName
+        ,VARCHAR UserPassword    = @UserPassword
+        ,VARCHAR AccountId       = @AccountId
+        ,INTEGER MaxSessions     = @MaxSessions
+        ,INTEGER MinSessions     = @MinSessions
+        ,VARCHAR TargetTable     = @TargetTable
+        ,VARCHAR WorkingDatabase = @WorkingDatabase
+        ,VARCHAR MacroDatabase   = @MacroDatabase
+        ,VARCHAR LogTable        = @LogTable
+        ,VARCHAR ErrorTable1     = @ErrorTable1
+        ,VARCHAR ErrorTable2     = @ErrorTable2
+        ,VARCHAR WorkTable       = @WorkTable
+        ,VARCHAR PrivateLogName  = 'Load'
+        ,INTEGER TenacityHours   = 1
+        ,INTEGER TenacitySleep   = 6
+        ,INTEGER ErrorLimit      = 10
+    );
+
+DEFINE OPERATOR o_bteq
+   TYPE inserter
+   SCHEMA *
+   ATTRIBUTES
+    (
+        VARCHAR TdpId           = @TdpId
+        ,VARCHAR UserName        = @UserName
+        ,VARCHAR UserPassword    = @UserPassword
+        ,VARCHAR AccountId       = @AccountId
+        ,INTEGER MaxSessions     = @MaxSessions
+        ,INTEGER MinSessions     = @MinSessions
+        ,VARCHAR TargetTable     = @TargetTable
+        ,VARCHAR WorkingDatabase = @WorkingDatabase
+        ,VARCHAR LogTable        = @LogTable
+        ,VARCHAR ErrorTable1     = @ErrorTable1
+        ,VARCHAR ErrorTable2     = @ErrorTable2
+        ,VARCHAR WorkTable       = @WorkTable
+        ,VARCHAR PrivateLogName  = 'Load'
+    );
+
+DEFINE OPERATOR o_fastload
+   TYPE load
+   SCHEMA *
+   ATTRIBUTES
+    (
+        VARCHAR TdpId           = @TdpId
+        ,VARCHAR UserName        = @UserName
+        ,VARCHAR UserPassword    = @UserPassword
+        ,VARCHAR AccountId       = @AccountId
+        ,INTEGER MaxSessions     = @MaxSessions
+        ,INTEGER MinSessions     = @MinSessions
+        ,VARCHAR TargetTable     = @TargetTable
+        ,VARCHAR WorkingDatabase = @WorkingDatabase
+        ,VARCHAR LogTable        = @LogTable
+        ,VARCHAR ErrorTable1     = @ErrorTable1
+        ,VARCHAR ErrorTable2     = @ErrorTable2
+        ,VARCHAR WorkTable       = @WorkTable
+        ,VARCHAR PrivateLogName  = 'Load'
+    );
+
+DEFINE OPERATOR Read_Operator
+        TYPE DATACONNECTOR PRODUCER
+        SCHEMA Flat_File_Schema
+        ATTRIBUTES
+         (
+        VARCHAR FILELIST        = 'YES'
+        ,VARCHAR FileName        = @ListFile
+        ,VARCHAR Format          = 'text'
+        ,VARCHAR OpenMode        = 'Read'
+        ,VARCHAR IndicatorMode   = 'N'
+        ,VARCHAR PrivateLogName  = 'Read'
+        );
+
+ DEFINE OPERATOR o_ddl
+  DESCRIPTION 'TERADATA PARALLEL TRANSPORTER DDL OPERATOR'
+  TYPE DDL
+  ATTRIBUTES
+   (
+     VARCHAR PrivateLogName  = 'Load',
+     VARCHAR TdpId           = @TdpId,
+     VARCHAR UserName        = @UserName,
+     VARCHAR UserPassword    = @UserPassword,
+     VARCHAR AccountID       = @AccountId,
+     VARCHAR TargetTable     = @TargetTable,
+     VARCHAR WorkingDatabase = @WorkingDatabase,
+     VARCHAR LogTable        = @LogTable,
+     VARCHAR ErrorTable1     = @ErrorTable1,
+     VARCHAR ErrorTable2     = @ErrorTable2,
+     VARCHAR WorkTable       = @WorkTable
+   );
+
+APPLY
+(
+
+'INSERT INTO EXAMPLE1(
+
+	COLUMN1
+	,COLUMN_DATE
+ ) VALUES
+(
+
+ :Column1
+,CAST(:Column_Date AS DATE FORMAT ''YYYYMMDD'')
+
+);'
+)
+
+        TO OPERATOR ( @load_op[@LoadInst] )
+        SELECT * FROM OPERATOR ( Read_Operator[@ReadInst] );
+);
