@@ -10,7 +10,7 @@ TPT Accelerator Scripts is a tool to help with the conversion from TPT to SnowSQ
 
  - The lab assumes that you have a valid SnowConvert license.
 
- - The script provided in this lab is designed to work only on specific set of TPT patterns as described in the lab documentation.
+ - The script provided in this lab is designed to work only on specific set of TPT patterns provided in the examples.
 
   - The script is provided as an accelerator to aid on the migration of TPT to SQL. It is not a TPT migration tool. Some manual adjustments might be needed after running the scripts.
 
@@ -20,11 +20,11 @@ In the following sections you will find the necessary steps to perform the TPT f
 
 ### **Step 1 - Extract SQL Snippets**
 
-Put TPT files in a source folder
+Put TPT files in a source folder. You can find the examples [here](samples)
 
  ![alt-text-here](assents/TPTAcceleratorScripts001.jpg)
 
-Run the [tpt_accelerator_step1.py](/workspace/TeradataExportScripts/TPT_To_SQL/scripts/tpt_accelerator_step1.py) python script as follows:
+Run the [tpt_accelerator_step1.py](scripts/tpt_accelerator_step1.py) python script as follows:
  
 Parameters:
 
@@ -56,7 +56,7 @@ Copy the converted code in the outdir (workdir) folder as follows:
 
 ### Step 3: Embed the converted code
 
-Run the [tpt_accelerator_step2.py](/workspace/TeradataExportScripts/TPT_To_SQL/scripts/tpt_accelerator_step2.py) python script as follows:
+Run the [tpt_accelerator_step2.py](scripts/tpt_to_sql_step2.py) python script as follows:
 
 Parameters:
  

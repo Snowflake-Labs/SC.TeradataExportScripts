@@ -5,7 +5,7 @@ DESCRIPTION 'EXAMPLE1 Table V1.0'
 DEFINE SCHEMA Flat_File_Schema
 (
  Column1                                   CHAR(3)
-,Posting_Date                                      CHAR(8)
+,Column_Date                                      CHAR(8)
 );
 
 DEFINE OPERATOR o_mload

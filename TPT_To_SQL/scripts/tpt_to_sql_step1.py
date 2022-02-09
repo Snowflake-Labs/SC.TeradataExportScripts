@@ -1,29 +1,53 @@
-
+##########################################################################################################
+#
+#  Copyright (C) Mobilize.Net info@mobilize.net - All Rights Reserved
+#  This file is part of the Mobilize Frameworks, which is proprietary and confidential.
+#  NOTICE: All information contained herein is, and remains the property of Mobilize.Net Corporation.
+#  The intellectual and technical concepts contained herein are proprietary to Mobilize.Net Corporation 
+#  and may be covered by U.S. Patents, and are protected by trade secret or copyright law.
+#  Dissemination of this information or reproduction of this material is strictly forbidden unless 
+#  prior written permission is obtained from Mobilize.Net Corporation.
+#
+#---------------------------------------------------------------------------------------------------------
+#  TPT to SQL Scripts:
+#  This is a helper utility consisting of two steps to convert TPT files to SQL.
+#  
+#  This is the step 1. This step extracts the SQL from the TPT files and generates one or more SQL 
+#  snippets to convert with the SnowConvert for Teradata Tool. In addition, this step generates a 
+#  preliminary conversion of the TPT file. 
+#
+#  Parameters:
+#  -- inputdir: This is the directory where your *.tpt files are
+#  -- outdir: This is the directory where the SQL preprocessed files will be put
+#
+# Changes History
+#    20220209-TGM: 
+#      - Initial Version
+# 
+##########################################################################################################
 
 import argparse
 import os
 import re
 import glob
 from shutil import copyfile
-from tkinter import E
-
-# import module sys to get the type of exception
 import sys
 
-arguments_parser = argparse.ArgumentParser(description="TPT Preprocessing tool")
+arguments_parser = argparse.ArgumentParser(description="TPT to SQL Tool: Step 1")
 arguments_parser.add_argument('--inputdir',required=True, help='This is the directory where your *.tpt files are')
 arguments_parser.add_argument('--outdir', required=True, help='This is the directory where the SQL preprocessed files will be put')
-arguments_parser.set_defaults(verbose=False)
 arguments = arguments_parser.parse_args()
 
 input_directory = arguments.inputdir
 output_directory = arguments.outdir
 
+# Class to hold Schema definitions
 class Schema:
     def __init__(self, name, columns):
         self.name = name
         self.columns = columns
 
+# Class to hold Operator definitions
 class Operator:
     def __init__(self, name, type, schema, attributes):
         self.name = name
@@ -31,14 +55,17 @@ class Operator:
         self.schema = schema,
         self.attribtutes = attributes
 
+# Class to hold Apply definitions
 class Apply:
     def __init__(self, id, statement):
         self.id = id
         self.statement = statement
 
-appliesCount = 0
-merge_flag = r"INSERT\s+FOR\s+MISSING\s+UPDATE\s+ROWS"
-
+# Definition:
+#   Method to read the schemas information. The reading stops when the first ");" is found.
+# Parameters:
+#   - index: line index where schema information was found.
+#   - lines: lines of the file
 def read_schema(index, lines):
     i = 0
     content = ''
@@ -56,6 +83,11 @@ def read_schema(index, lines):
     schema_columns = content
     return Schema(schema_name, schema_columns)
 
+# Definition:
+#   Method to read the operators information. The reading stops when the first ");" is found.
+# Parameters:
+#   - index: line index where operator information was found.
+#   - lines: lines of the file
 def read_operator(index, lines):
     i = 0
     content = ''
@@ -82,6 +114,12 @@ def read_operator(index, lines):
     operator_attributes = content
     return Operator(operator_name, operator_type, operator_schema, operator_attributes)
 
+# Definition:
+#   Method to read the applies information. The reading stops when the first ");" is found.
+#   An apply definition can contain multiple statements divided by ';'. This method returns a list of.
+# Parameters:
+#   - index: line index where apply information was found.
+#   - lines: lines of the file
 def read_apply(index, lines):
     i = 0
     content = ''
@@ -98,6 +136,12 @@ def read_apply(index, lines):
         applies.append(Apply(0, stmt))
     return applies
 
+# Definition:
+#   Method to extract and format the SQL code from apply statements. 
+#   This method creates the SQL snippets of the file being processed.
+# Parameters:
+#   - apply: apply instance 
+#   - filename: name of the file being processed
 def extract_sql_from_apply(apply, filename): 
     apply_contents = ''
     name = os.path.splitext(os.path.basename(filename))[0]       
@@ -125,6 +169,13 @@ def extract_sql_from_apply(apply, filename):
     with open(target_file,"w") as f:
         f.write(apply_contents)
 
+# Definition:
+#   Method to create a preliminary SQL file using the collected information
+# Parameters:
+#   - filename: name of the file being processed
+#   - schemas: list of file schemas 
+#   - applies: list of file applies 
+#   - merge_alert: flag to identify if the file contains a merge statement
 def create_sql_template(filename, schemas, applies, merge_alert): 
     name = os.path.splitext(os.path.basename(filename))[0]
     target_file = os.path.join(output_directory, name + ".sql")
@@ -152,6 +203,11 @@ def create_sql_template(filename, schemas, applies, merge_alert):
     with open(target_file,"w") as f:
         f.write(contents)
 
+# Definition:
+#   This method get the schemas, operators and applies information from TPT file. 
+#   Then, it creates one or more SQL snippets to be processed in SnowConvert for Teradata tool and a preliminary SQL file
+# Parameters:
+#   - filename: name of the file being processed
 def process_file(filename):
     schemas = []
     operators = []
@@ -160,6 +216,7 @@ def process_file(filename):
     appliesCount = 0
     merge_alert = False
     name = os.path.splitext(os.path.basename(filename))[0]
+    merge_flag = r".*INSERT\s+FOR\s+MISSING\s+UPDATE\s+ROWS.*"
 
     lines = open(filename).readlines()
     index = 1
@@ -193,9 +250,12 @@ def process_file(filename):
     # Create template new SQL file
     create_sql_template(filename, schemas, applies, merge_alert)
 
-print("Teradata TPTs Pre-process tool")
+print("TPT to SQL Tool: Step 1")
 print(f'Processing folder {input_directory}')
-# get list of files
+
+# Get the list of the files in the input directory to be process
+# Only get the *.sql files in the root directory
+
 os.chdir(input_directory)
 for file in glob.glob("*.tpt"):
     try:
